@@ -21,4 +21,5 @@ executable gml-explorer
   build-depends:      base,
                       bytestring,
                       hexpat,
+                      optparse-applicative,
                       unordered-containers
