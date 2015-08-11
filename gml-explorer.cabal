@@ -9,7 +9,7 @@ maintainer:         Miëtek Bak <hello@mietek.io>
 stability:          experimental
 homepage:           https://github.com/mietek/gml-explorer
 license-file:       LICENSE.md
-extra-source-files: README,md
+extra-source-files: README.md
 synopsis:           TODO
 description:        TODO
 
