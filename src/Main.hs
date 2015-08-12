@@ -50,7 +50,7 @@ parseOptions =
 parseInput :: Parser FilePath
 parseInput =
     O.argument O.str
-       ( O.metavar "FILEPATH"
+       ( O.metavar "INPUT"
       <> O.help "File containing OS GML input"
        )
 
