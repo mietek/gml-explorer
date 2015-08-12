@@ -101,6 +101,12 @@ elementAttrKeys (StartElement _ attrs) = map fst attrs
 elementAttrKeys _ = []
 
 
+{-
+
+G.H. Mealy, “A method for synthesizing sequential circuits”, Bell System Technical Journal, 1955, pp. 1045–1079
+
+-}
+
 newtype MealyMachine = MM
   { runMealyMachine :: Transition
   }
