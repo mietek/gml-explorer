@@ -3,8 +3,8 @@
 module Main where
 
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as C
-import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.HashSet as S
 import Data.List (mapAccumL, sort)
 import Data.Maybe (catMaybes)
@@ -38,7 +38,7 @@ main = do
          )
     xml <- L.readFile (optInput opts)
     let results = process (optCommand opts) xml
-    mapM_ C.putStrLn results
+    mapM_ B.putStr results
 
 
 parseOptions :: Parser Options
@@ -119,8 +119,8 @@ startMealyMachine next = MM next
 await :: Transition -> (MealyMachine, Maybe ByteString)
 await next = (MM next, Nothing)
 
-andAwait :: ByteString -> Transition -> (MealyMachine, Maybe ByteString)
-andAwait result next = (MM next, Just result)
+yield :: ByteString -> Transition -> (MealyMachine, Maybe ByteString)
+yield part next = (MM next, Just part)
 
 statefulStream :: MealyMachine -> L.ByteString -> [ByteString]
 statefulStream m = catMaybes . snd . mapAccumL runMealyMachine m . parse
@@ -143,12 +143,9 @@ polylines_startCoordinates (StartElement "gml:coordinates" _) = await polylines_
 polylines_startCoordinates _                                  = await polylines_startCoordinates
 
 polylines_characterData :: Transition
-polylines_characterData (CharacterData yield) = yield `andAwait` polylines_endCoordinates
-polylines_characterData _                     = await polylines_characterData
-
-polylines_endCoordinates :: Transition
-polylines_endCoordinates (EndElement "gml:coordinates") = await polylines_endLineString
-polylines_endCoordinates _                              = await polylines_endCoordinates
+polylines_characterData (CharacterData part)           = yield part polylines_characterData
+polylines_characterData (EndElement "gml:coordinates") = yield "\n" polylines_endLineString
+polylines_characterData _                              = await polylines_characterData
 
 polylines_endLineString :: Transition
 polylines_endLineString (EndElement "gml:LineString") = await polylines_endPolyline
@@ -180,12 +177,9 @@ points_startCoordinates (StartElement "gml:coordinates" _) = await points_charac
 points_startCoordinates _                                  = await points_startCoordinates
 
 points_characterData :: Transition
-points_characterData (CharacterData yield) = yield `andAwait` points_endCoordinates
-points_characterData _                     = await points_characterData
-
-points_endCoordinates :: Transition
-points_endCoordinates (EndElement "gml:coordinates") = await points_endGMLPoint
-points_endCoordinates _                              = await points_endCoordinates
+points_characterData (CharacterData part)           = yield part points_characterData
+points_characterData (EndElement "gml:coordinates") = yield "\n" points_endGMLPoint
+points_characterData _                              = await points_characterData
 
 points_endGMLPoint :: Transition
 points_endGMLPoint (EndElement "gml:Point") = await points_endOSGBPoint
