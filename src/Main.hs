@@ -43,9 +43,9 @@ main = do
 
 parseOptions :: Parser Options
 parseOptions =
-  Options <$>
-        parseInput
-    <*> parseCommand
+    Options <$>
+          parseInput
+      <*> parseCommand
 
 parseInput :: Parser FilePath
 parseInput =
