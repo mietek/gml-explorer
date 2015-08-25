@@ -26,8 +26,8 @@ main = do
 process :: Command -> L.ByteString -> [ByteString]
 process Tags      = unique . stream tags
 process AttrKeys  = unique . stream attrKeys
-process Polylines = statefulStream (newMealyMachine polylines_startRoadLink)
-process Points    = statefulStream (newMealyMachine points_startRoadNode)
+process Polylines = statefulStream (newMealyMachine polylines)
+process Points    = statefulStream (newMealyMachine points)
 
 
 unique :: [ByteString] -> [ByteString]

@@ -1,41 +1,44 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Points where
+module Points (points) where
 
 import Text.XML.Expat.SAX (SAXEvent(..))
 
 import MealyMachine
 
 
-points_startRoadNode :: Transition
-points_startRoadNode (StartElement "osgb:RoadNode" _) = await points_startOSGBPoint
-points_startRoadNode _                                = await points_startRoadNode
+points :: Transition
+points = startRoadNode
 
-points_startOSGBPoint :: Transition
-points_startOSGBPoint (StartElement "osgb:point" _) = await points_startGMLPoint
-points_startOSGBPoint _                             = await points_startOSGBPoint
+startRoadNode :: Transition
+startRoadNode (StartElement "osgb:RoadNode" _) = await startOSGBPoint
+startRoadNode _                                = await startRoadNode
 
-points_startGMLPoint :: Transition
-points_startGMLPoint (StartElement "gml:Point" _) = await points_startCoordinates
-points_startGMLPoint _                            = await points_startGMLPoint
+startOSGBPoint :: Transition
+startOSGBPoint (StartElement "osgb:point" _) = await startGMLPoint
+startOSGBPoint _                             = await startOSGBPoint
 
-points_startCoordinates :: Transition
-points_startCoordinates (StartElement "gml:coordinates" _) = await points_characterData
-points_startCoordinates _                                  = await points_startCoordinates
+startGMLPoint :: Transition
+startGMLPoint (StartElement "gml:Point" _) = await startCoordinates
+startGMLPoint _                            = await startGMLPoint
 
-points_characterData :: Transition
-points_characterData (CharacterData part)           = yield part points_characterData
-points_characterData (EndElement "gml:coordinates") = yield "\n" points_endGMLPoint
-points_characterData _                              = await points_characterData
+startCoordinates :: Transition
+startCoordinates (StartElement "gml:coordinates" _) = await characterData
+startCoordinates _                                  = await startCoordinates
 
-points_endGMLPoint :: Transition
-points_endGMLPoint (EndElement "gml:Point") = await points_endOSGBPoint
-points_endGMLPoint _                        = await points_endGMLPoint
+characterData :: Transition
+characterData (CharacterData part)           = yield part characterData
+characterData (EndElement "gml:coordinates") = yield "\n" endGMLPoint
+characterData _                              = await characterData
 
-points_endOSGBPoint :: Transition
-points_endOSGBPoint (EndElement "osgb:point") = await points_endRoadNode
-points_endOSGBPoint _                         = await points_endOSGBPoint
+endGMLPoint :: Transition
+endGMLPoint (EndElement "gml:Point") = await endOSGBPoint
+endGMLPoint _                        = await endGMLPoint
 
-points_endRoadNode :: Transition
-points_endRoadNode (EndElement "osgb:RoadNode") = await points_startRoadNode
-points_endRoadNode _                            = await points_endRoadNode
+endOSGBPoint :: Transition
+endOSGBPoint (EndElement "osgb:point") = await endRoadNode
+endOSGBPoint _                         = await endOSGBPoint
+
+endRoadNode :: Transition
+endRoadNode (EndElement "osgb:RoadNode") = await startRoadNode
+endRoadNode _                            = await endRoadNode
