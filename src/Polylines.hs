@@ -5,14 +5,15 @@ module Polylines (polylines) where
 import Text.XML.Expat.SAX (SAXEvent(..))
 
 import MealyMachine
+import TOID
 
 
 polylines :: Transition
 polylines = startRoadLink
 
 startRoadLink :: Transition
-startRoadLink (StartElement "osgb:RoadLink" _) = await startPolyline
-startRoadLink _                                = await startRoadLink
+startRoadLink (StartElement "osgb:RoadLink" attrs) = yieldTOID attrs startPolyline
+startRoadLink _                                    = await startRoadLink
 
 startPolyline :: Transition
 startPolyline (StartElement "osgb:polyline" _) = await startLineString

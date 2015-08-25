@@ -5,14 +5,15 @@ module Points (points) where
 import Text.XML.Expat.SAX (SAXEvent(..))
 
 import MealyMachine
+import TOID
 
 
 points :: Transition
 points = startRoadNode
 
 startRoadNode :: Transition
-startRoadNode (StartElement "osgb:RoadNode" _) = await startOSGBPoint
-startRoadNode _                                = await startRoadNode
+startRoadNode (StartElement "osgb:RoadNode" attrs) = yieldTOID attrs startOSGBPoint
+startRoadNode _                                    = await startRoadNode
 
 startOSGBPoint :: Transition
 startOSGBPoint (StartElement "osgb:point" _) = await startGMLPoint
