@@ -49,10 +49,10 @@ parseCommand =
       <> O.command "attrkeys"
            (O.info (O.helper <*> O.pure AttrKeys)
            (O.progDesc "Output unique attribute keys"))
-      <> O.command "polylines"
-           (O.info (O.helper <*> O.pure Polylines)
-           (O.progDesc "Output all OS RoadLink polylines"))
-      <> O.command "points"
-           (O.info (O.helper <*> O.pure Points)
-           (O.progDesc "Output all OS RoadNode points"))
+      <> O.command "roadlinks"
+           (O.info (O.helper <*> O.pure RoadLinks)
+           (O.progDesc "Output OS RoadLink geometry"))
+      <> O.command "roadnodes"
+           (O.info (O.helper <*> O.pure RoadNodes)
+           (O.progDesc "Output OS RoadNode geometry"))
        )
