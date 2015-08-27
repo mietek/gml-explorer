@@ -13,8 +13,8 @@ data Options = Options
 data Command =
     Tags
   | AttrKeys
-  | Polylines
-  | Points
+  | RoadLinks
+  | RoadNodes
   deriving (Eq, Ord, Show)
 
 

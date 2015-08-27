@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Points (points) where
+module RoadNodes (roadNodes) where
 
 import Text.XML.Expat.SAX (SAXEvent(..))
 
@@ -8,8 +8,8 @@ import MealyMachine
 import TOID
 
 
-points :: Transition
-points = startRoadNode
+roadNodes :: Transition
+roadNodes = startRoadNode
 
 startRoadNode :: Transition
 startRoadNode (StartElement "osgb:RoadNode" attrs) = yieldTOID attrs startOSGBPoint

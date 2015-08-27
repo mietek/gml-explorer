@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Polylines (polylines) where
+module RoadLinks (roadLinks) where
 
 import Text.XML.Expat.SAX (SAXEvent(..))
 
@@ -8,8 +8,8 @@ import MealyMachine
 import TOID
 
 
-polylines :: Transition
-polylines = startRoadLink
+roadLinks :: Transition
+roadLinks = startRoadLink
 
 startRoadLink :: Transition
 startRoadLink (StartElement "osgb:RoadLink" attrs) = yieldTOID attrs startPolyline

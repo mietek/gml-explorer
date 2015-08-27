@@ -13,8 +13,8 @@ import qualified Text.XML.Expat.SAX as X
 
 import MealyMachine
 import Options
-import Points
-import Polylines
+import RoadLinks
+import RoadNodes
 
 
 main :: IO ()
@@ -28,8 +28,8 @@ main = do
 process :: Command -> L.ByteString -> [ByteString]
 process Tags      = intersperse "\n" . unique . stream tags
 process AttrKeys  = intersperse "\n" . unique . stream attrKeys
-process Polylines = statefulStream (newMealyMachine polylines)
-process Points    = statefulStream (newMealyMachine points)
+process RoadLinks = statefulStream (newMealyMachine roadLinks)
+process RoadNodes = statefulStream (newMealyMachine roadNodes)
 
 
 unique :: [ByteString] -> [ByteString]
