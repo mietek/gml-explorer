@@ -1,10 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.HashSet as S
-import Data.List (mapAccumL, sort)
+import Data.List (intersperse, mapAccumL, sort)
 import Data.Maybe (catMaybes)
 import Text.XML.Expat.SAX (ParseOptions(..), SAXEvent(..))
 import qualified Text.XML.Expat.SAX as X
@@ -24,8 +26,8 @@ main = do
 
 
 process :: Command -> L.ByteString -> [ByteString]
-process Tags      = unique . stream tags
-process AttrKeys  = unique . stream attrKeys
+process Tags      = intersperse "\n" . unique . stream tags
+process AttrKeys  = intersperse "\n" . unique . stream attrKeys
 process Polylines = statefulStream (newMealyMachine polylines)
 process Points    = statefulStream (newMealyMachine points)
 
