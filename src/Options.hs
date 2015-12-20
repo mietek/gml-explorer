@@ -1,6 +1,6 @@
 module Options where
 
-import Options.Applicative ((<$>), (<*>), (<>), Parser)
+import Options.Applicative ((<>), Parser)
 import qualified Options.Applicative as O
 
 
