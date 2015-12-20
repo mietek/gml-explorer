@@ -1,45 +1,33 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-module RoadNodes (roadNodes) where
+module RoadNodes (root) where
 
 import Text.XML.Expat.SAX (SAXEvent(..))
 
+import ITN
 import MealyMachine
-import TOID
 
 
-roadNodes :: Transition
-roadNodes = startRoadNode
+root (StartElement "osgb:networkMember" _) = await networkMember
+root _ = await root
 
-startRoadNode :: Transition
-startRoadNode (StartElement "osgb:RoadNode" attrs) = yieldTOID attrs startOSGBPoint
-startRoadNode _                                    = await startRoadNode
+networkMember (EndElement "osgb:networkMember")    = await root
+networkMember (StartElement "osgb:RoadNode" attrs) = yieldTOID attrs roadNode
+networkMember _ = await networkMember
 
-startOSGBPoint :: Transition
-startOSGBPoint (StartElement "osgb:point" _) = await startGMLPoint
-startOSGBPoint _                             = await startOSGBPoint
+roadNode (EndElement "osgb:RoadNode")  = yield "\n" networkMember
+roadNode (StartElement "osgb:point" _) = await osgbPoint
+roadNode _ = await roadNode
 
-startGMLPoint :: Transition
-startGMLPoint (StartElement "gml:Point" _) = await startCoordinates
-startGMLPoint _                            = await startGMLPoint
+osgbPoint (EndElement "osgb:point")    = await roadNode
+osgbPoint (StartElement "gml:Point" _) = await gmlPoint
+osgbPoint _ = await osgbPoint
 
-startCoordinates :: Transition
-startCoordinates (StartElement "gml:coordinates" _) = await characterData
-startCoordinates _                                  = await startCoordinates
+gmlPoint (EndElement "gml:Point")           = await osgbPoint
+gmlPoint (StartElement "gml:coordinates" _) = await coordinates
+gmlPoint _ = await gmlPoint
 
-characterData :: Transition
-characterData (CharacterData part)           = yield part characterData
-characterData (EndElement "gml:coordinates") = yield "\n" endGMLPoint
-characterData _                              = await characterData
-
-endGMLPoint :: Transition
-endGMLPoint (EndElement "gml:Point") = await endOSGBPoint
-endGMLPoint _                        = await endGMLPoint
-
-endOSGBPoint :: Transition
-endOSGBPoint (EndElement "osgb:point") = await endRoadNode
-endOSGBPoint _                         = await endOSGBPoint
-
-endRoadNode :: Transition
-endRoadNode (EndElement "osgb:RoadNode") = await startRoadNode
-endRoadNode _                            = await endRoadNode
+coordinates (EndElement "gml:coordinates") = await gmlPoint
+coordinates (CharacterData part)           = yield part coordinates
+coordinates _ = await coordinates

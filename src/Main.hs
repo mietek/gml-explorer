@@ -13,8 +13,8 @@ import qualified Text.XML.Expat.SAX as X
 
 import MealyMachine
 import Options
-import RoadLinks
-import RoadNodes
+import qualified RoadLinks as RL
+import qualified RoadNodes as RN
 
 
 main :: IO ()
@@ -28,8 +28,8 @@ main = do
 process :: Command -> L.ByteString -> [ByteString]
 process Tags      = intersperse "\n" . unique . stream tags
 process AttrKeys  = intersperse "\n" . unique . stream attrKeys
-process RoadLinks = statefulStream (newMealyMachine roadLinks)
-process RoadNodes = statefulStream (newMealyMachine roadNodes)
+process RoadLinks = statefulStream (newMealyMachine RL.root)
+process RoadNodes = statefulStream (newMealyMachine RN.root)
 
 
 unique :: [ByteString] -> [ByteString]

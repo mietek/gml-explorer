@@ -1,45 +1,33 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-module RoadLinks (roadLinks) where
+module RoadLinks (root) where
 
 import Text.XML.Expat.SAX (SAXEvent(..))
 
+import ITN
 import MealyMachine
-import TOID
 
 
-roadLinks :: Transition
-roadLinks = startRoadLink
+root (StartElement "osgb:networkMember" _) = await networkMember
+root _ = await root
 
-startRoadLink :: Transition
-startRoadLink (StartElement "osgb:RoadLink" attrs) = yieldTOID attrs startPolyline
-startRoadLink _                                    = await startRoadLink
+networkMember (EndElement "osgb:networkMember")    = await root
+networkMember (StartElement "osgb:RoadLink" attrs) = yieldTOID attrs roadLink
+networkMember _ = await networkMember
 
-startPolyline :: Transition
-startPolyline (StartElement "osgb:polyline" _) = await startLineString
-startPolyline _                                = await startPolyline
+roadLink (EndElement "osgb:RoadLink")     = yield "\n" networkMember
+roadLink (StartElement "osgb:polyline" _) = await polyline
+roadLink _ = await roadLink
 
-startLineString :: Transition
-startLineString (StartElement "gml:LineString" _) = await startCoordinates
-startLineString _                                 = await startLineString
+polyline (EndElement "osgb:polyline")      = await roadLink
+polyline (StartElement "gml:LineString" _) = await lineString
+polyline _ = await polyline
 
-startCoordinates :: Transition
-startCoordinates (StartElement "gml:coordinates" _) = await characterData
-startCoordinates _                                  = await startCoordinates
+lineString (EndElement "gml:LineString")      = await polyline
+lineString (StartElement "gml:coordinates" _) = await coordinates
+lineString _ = await lineString
 
-characterData :: Transition
-characterData (CharacterData part)           = yield part characterData
-characterData (EndElement "gml:coordinates") = yield "\n" endLineString
-characterData _                              = await characterData
-
-endLineString :: Transition
-endLineString (EndElement "gml:LineString") = await endPolyline
-endLineString _                             = await endLineString
-
-endPolyline :: Transition
-endPolyline (EndElement "osgb:polyline") = await endRoadLink
-endPolyline _                            = await endPolyline
-
-endRoadLink :: Transition
-endRoadLink (EndElement "osgb:RoadLink") = await startRoadLink
-endRoadLink _                            = await endRoadLink
+coordinates (EndElement "gml:coordinates") = yield " " lineString
+coordinates (CharacterData part)           = yield part coordinates
+coordinates _ = await coordinates
