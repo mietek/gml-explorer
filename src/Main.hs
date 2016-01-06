@@ -13,6 +13,8 @@ import Options
 import qualified Roads
 import qualified RoadLinks
 import qualified RoadNodes
+import qualified FerryLinks
+import qualified FerryNodes
 
 
 main :: IO ()
@@ -33,6 +35,10 @@ dispatch RoadLinks =
     RoadLinks.root
 dispatch RoadNodes =
     RoadNodes.root
+dispatch FerryLinks =
+    FerryLinks.root
+dispatch FerryNodes =
+    FerryNodes.root
 
 
 writeFiles :: FilePath -> Command -> [ByteString] -> Int -> IO ()

@@ -17,6 +17,8 @@ data Command =
     Roads
   | RoadLinks
   | RoadNodes
+  | FerryLinks
+  | FerryNodes
   deriving (Eq, Ord, Show)
 
 
@@ -68,6 +70,8 @@ parseCommand =
          command "roads" "Output OS Road geometry" Roads
       <> command "roadlinks" "Output OS RoadLink geometry" RoadLinks
       <> command "roadnodes" "Output OS RoadNode geometry" RoadNodes
+      <> command "ferrylinks" "Output OS FerryLink geometry" FerryLinks
+      <> command "ferrynodes" "Output OS FerryNode geometry" FerryNodes
 
 
 command :: String -> String -> Command -> P.Mod P.CommandFields Command
