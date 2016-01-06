@@ -1,18 +1,20 @@
 module Options where
 
 import Options.Applicative ((<>), Parser)
-import qualified Options.Applicative as O
+import qualified Options.Applicative as P
 
 
-data Options = Options
-  { optInput   :: FilePath
-  , optCommand :: Command
-  }
+data Options = Opts
+    { inFileOpt  :: FilePath
+    , outDirOpt  :: FilePath
+    , maxSizeOpt :: Int
+    , cmdOpt     :: Command
+    }
   deriving (Eq, Show)
 
+
 data Command =
-    Tags
-  | AttrKeys
+    Roads
   | RoadLinks
   | RoadNodes
   deriving (Eq, Ord, Show)
@@ -20,39 +22,57 @@ data Command =
 
 getOptions :: IO Options
 getOptions =
-    O.execParser $
-      O.info (O.helper <*> parseOptions)
-         ( O.header "gml-explorer"
-        <> O.progDesc "Explore an OS GML file"
-        <> O.fullDesc
-         )
+    P.execParser $
+      P.info (P.helper <*> parseOptions) $
+           P.header "gml-explorer"
+        <> P.progDesc "Explore an OS GML file"
+        <> P.fullDesc
+
 
 parseOptions :: Parser Options
-parseOptions =
-    Options <$>
-          parseInput
-      <*> parseCommand
+parseOptions = Opts <$>
+        parseInputFile
+    <*> parseOutputDir
+    <*> parseMaxFileSize
+    <*> parseCommand
 
-parseInput :: Parser FilePath
-parseInput =
-    O.argument O.str
-       ( O.metavar "INPUT"
-      <> O.help "File containing OS GML input"
-       )
+
+parseInputFile :: Parser FilePath
+parseInputFile =
+    P.argument P.str $
+         P.metavar "INPUT_FILE"
+      <> P.help "File containing OS GML input"
+
+
+parseOutputDir :: Parser FilePath
+parseOutputDir =
+    P.strOption $
+         P.metavar "OUTPUT_DIR"
+      <> P.short 'o'
+      <> P.value "dist/out"
+      <> P.help "Output directory"
+
+
+parseMaxFileSize :: Parser Int
+parseMaxFileSize =
+    P.option P.auto $
+         P.metavar "MAX_FILE_SIZE"
+      <> P.short 's'
+      <> P.value 33554432
+      <> P.help "Maximum size of file to output (bytes)"
+
 
 parseCommand :: Parser Command
 parseCommand =
-    O.subparser
-       ( O.command "tags"
-           (O.info (O.helper <*> O.pure Tags)
-           (O.progDesc "Output unique tags"))
-      <> O.command "attrkeys"
-           (O.info (O.helper <*> O.pure AttrKeys)
-           (O.progDesc "Output unique attribute keys"))
-      <> O.command "roadlinks"
-           (O.info (O.helper <*> O.pure RoadLinks)
-           (O.progDesc "Output OS RoadLink geometry"))
-      <> O.command "roadnodes"
-           (O.info (O.helper <*> O.pure RoadNodes)
-           (O.progDesc "Output OS RoadNode geometry"))
-       )
+    P.subparser $
+         command "roads" "Output OS Road geometry" Roads
+      <> command "roadlinks" "Output OS RoadLink geometry" RoadLinks
+      <> command "roadnodes" "Output OS RoadNode geometry" RoadNodes
+
+
+command :: String -> String -> Command -> P.Mod P.CommandFields Command
+command name desc cmd =
+    P.command name
+      (P.info
+        (P.helper <*> P.pure cmd)
+        (P.progDesc desc))

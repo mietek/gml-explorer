@@ -6,24 +6,58 @@ G.H. Mealy, “A method for synthesizing sequential circuits”, Bell System Tec
 
 module MealyMachine where
 
+import Data.Aeson (ToJSON)
 import Data.ByteString (ByteString)
+import Data.List (mapAccumL)
+import Data.Maybe (catMaybes)
 import Text.XML.Expat.SAX (SAXEvent)
+import qualified Data.ByteString.Lazy.Char8 as L
+import qualified Text.XML.Expat.SAX as X
+
+import Toolkit
 
 
-type Event = SAXEvent ByteString ByteString
+type Event =
+    SAXEvent ByteString ByteString
 
-type Transition = Event -> (MealyMachine, Maybe ByteString)
 
-newtype MealyMachine = MM
-  { runMealyMachine :: Transition
+type Transition =
+    Event -> (MM, Maybe ByteString)
+
+
+newtype MM = MM
+  { stepMM :: Transition
   }
 
 
-newMealyMachine :: Transition -> MealyMachine
-newMealyMachine next = MM next
+newMM :: Transition -> MM
+newMM next =
+    MM next
 
-await :: Transition -> (MealyMachine, Maybe ByteString)
-await next = (MM next, Nothing)
 
-yield :: ByteString -> Transition -> (MealyMachine, Maybe ByteString)
-yield item next = (MM next, Just item)
+runMM :: MM -> L.ByteString -> [ByteString]
+runMM mm =
+    catMaybes . snd . mapAccumL stepMM mm . parse
+  where
+    parse =
+        X.parse (X.ParseOptions Nothing Nothing)
+
+
+hold :: a -> (a -> Transition) -> (MM, Maybe ByteString)
+hold state next =
+    (MM (next state), Nothing)
+
+
+await :: Transition -> (MM, Maybe ByteString)
+await next =
+    (MM next, Nothing)
+
+
+yield :: (ToJSON a) => a -> Transition -> (MM, Maybe ByteString)
+yield item next =
+    (MM next, Just (encodeJSON item))
+
+
+yieldStr :: ByteString -> Transition -> (MM, Maybe ByteString)
+yieldStr item next =
+    (MM next, Just item)

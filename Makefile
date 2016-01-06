@@ -4,7 +4,7 @@ all: build
 
 package-file   := $(wildcard *.cabal)
 package-name   := $(patsubst %.cabal,%,$(package-file))
-sources        := $(wildcard src/*.hs)
+sources        := $(shell find src -type f -name '*.hs')
 sandbox-dir    := .cabal-sandbox
 sandbox-config := cabal.sandbox.config
 output         := dist
