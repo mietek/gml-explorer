@@ -70,7 +70,7 @@ writeItems [] _ h = do
 writeItems (firstItem : otherItems) maxSize h = do
     B.hPutStr h "["
     B.hPutStrLn h firstItem
-    restItems <- loop otherItems maxSize
+    restItems <- loop otherItems (maxSize - (B.length firstItem + 4))
     B.hPutStrLn h "]"
     return restItems
   where
@@ -78,7 +78,7 @@ writeItems (firstItem : otherItems) maxSize h = do
         return []
     loop items@(item : moreItems) size = do
         let
-          nextSize = size - B.length item
+          nextSize = size - (B.length item + 2)
         if nextSize >= 0
           then do
             B.hPutStr h ","
