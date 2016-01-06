@@ -60,7 +60,7 @@ parseMaxFileSize =
     P.option P.auto $
          P.metavar "MAX_FILE_SIZE"
       <> P.short 's'
-      <> P.value 33554432
+      <> P.value (30 * 1024 * 1024)
       <> P.help "Maximum size of file to output (bytes)"
 
 
