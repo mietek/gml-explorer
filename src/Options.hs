@@ -51,7 +51,8 @@ parseOutputDir =
     P.strOption $
          P.metavar "OUTPUT_DIR"
       <> P.short 'o'
-      <> P.value "dist/out"
+      <> P.value "out"
+      <> P.showDefault
       <> P.help "Output directory"
 
 
@@ -61,7 +62,8 @@ parseMaxFileSize =
          P.metavar "MAX_FILE_SIZE"
       <> P.short 's'
       <> P.value (30 * 1024 * 1024)
-      <> P.help "Maximum size of file to output (bytes)"
+      <> P.showDefault
+      <> P.help "Maximum size of file to output"
 
 
 parseCommand :: Parser Command
