@@ -27,7 +27,8 @@ The project is written in [Haskell](https://www.haskell.org/).  To build the pro
 The project is developed on OS X, but may support other UNIX platforms.  On OS X, system-level dependencies should be installed with the [`brew`](http://brew.sh/) tool.
 
 ```
-brew install ghc cabal
+brew install ghc cabal-install
+cabal update
 ```
 
 
