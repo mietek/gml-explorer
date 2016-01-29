@@ -53,7 +53,7 @@ networkMember :: Transition
 networkMember (EndElement "osgb:networkMember") =
     await root
 networkMember (StartElement "osgb:FerryNode" attrs) =
-    hold (newRN (getTOID attrs)) ferryNode
+    await (ferryNode (newRN (getTOID attrs)))
 networkMember _ =
     await networkMember
 
@@ -64,41 +64,41 @@ ferryNode fn (EndElement "osgb:FerryNode")
         yield fn networkMember
 ferryNode fn (StartElement "osgb:point" _)
   | fnPoint fn == Nothing =
-        hold fn osgbPoint
+        await (osgbPoint fn)
   | otherwise =
         error "ferryNode: expected 1 osgb:point"
 ferryNode fn _ =
-    hold fn ferryNode
+    await (ferryNode fn)
 
 
 osgbPoint :: FerryNode -> Transition
 osgbPoint fn (EndElement "osgb:point") =
-    hold fn ferryNode
+    await (ferryNode fn)
 osgbPoint fn (StartElement "gml:Point" _)
   | fnPoint fn == Nothing =
-        hold fn gmlPoint
+        await (gmlPoint fn)
   | otherwise =
         error "osgbPoint: expected 1 gml:Point"
 osgbPoint fn _ =
-    hold fn osgbPoint
+    await (osgbPoint fn)
 
 
 gmlPoint :: FerryNode -> Transition
 gmlPoint fn (EndElement "gml:Point") =
-    hold fn osgbPoint
+    await (osgbPoint fn)
 gmlPoint fn (StartElement "gml:coordinates" _)
   | fnPoint fn == Nothing =
-        hold fn (coordinates none)
+        await (coordinates none fn)
   | otherwise =
         error "gmlPoint: expected 1 gml:coordinates"
 gmlPoint fn _ =
-    hold fn gmlPoint
+    await (gmlPoint fn)
 
 
 coordinates :: Builder -> FerryNode -> Transition
 coordinates parts fn (EndElement "gml:coordinates") =
-    hold (fn {fnPoint = Just (decodePoint (build parts))}) gmlPoint
+    await (gmlPoint fn {fnPoint = Just (decodePoint (build parts))})
 coordinates parts fn (CharacterData part) =
-    hold fn (coordinates (parts <> part))
+    await (coordinates (parts <> part) fn)
 coordinates parts fn _ =
-    hold fn (coordinates parts)
+    await (coordinates parts fn)

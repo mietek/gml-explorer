@@ -53,7 +53,7 @@ networkMember :: Transition
 networkMember (EndElement "osgb:networkMember") =
     await root
 networkMember (StartElement "osgb:RoadNode" attrs) =
-    hold (newRN (getTOID attrs)) roadNode
+    await (roadNode (newRN (getTOID attrs)))
 networkMember _ =
     await networkMember
 
@@ -64,41 +64,41 @@ roadNode rn (EndElement "osgb:RoadNode")
         yield rn networkMember
 roadNode rn (StartElement "osgb:point" _)
   | rnPoint rn == Nothing =
-        hold rn osgbPoint
+        await (osgbPoint rn)
   | otherwise =
         error "roadNode: expected 1 osgb:point"
 roadNode rn _ =
-    hold rn roadNode
+    await (roadNode rn)
 
 
 osgbPoint :: RoadNode -> Transition
 osgbPoint rn (EndElement "osgb:point") =
-    hold rn roadNode
+    await (roadNode rn)
 osgbPoint rn (StartElement "gml:Point" _)
   | rnPoint rn == Nothing =
-        hold rn gmlPoint
+        await (gmlPoint rn)
   | otherwise =
         error "osgbPoint: expected 1 gml:Point"
 osgbPoint rn _ =
-    hold rn osgbPoint
+    await (osgbPoint rn)
 
 
 gmlPoint :: RoadNode -> Transition
 gmlPoint rn (EndElement "gml:Point") =
-    hold rn osgbPoint
+    await (osgbPoint rn)
 gmlPoint rn (StartElement "gml:coordinates" _)
   | rnPoint rn == Nothing =
-        hold rn (coordinates none)
+        await (coordinates none rn)
   | otherwise =
         error "gmlPoint: expected 1 gml:coordinates"
 gmlPoint rn _ =
-    hold rn gmlPoint
+    await (gmlPoint rn)
 
 
 coordinates :: Builder -> RoadNode -> Transition
 coordinates parts rn (EndElement "gml:coordinates") =
-    hold (rn {rnPoint = Just (decodePoint (build parts))}) gmlPoint
+    await (gmlPoint rn {rnPoint = Just (decodePoint (build parts))})
 coordinates parts rn (CharacterData part) =
-    hold rn (coordinates (parts <> part))
+    await (coordinates (parts <> part) rn)
 coordinates parts rn _ =
-    hold rn (coordinates parts)
+    await (coordinates parts rn)

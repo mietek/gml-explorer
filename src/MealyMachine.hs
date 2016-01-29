@@ -43,11 +43,6 @@ runMM mm =
         X.parse (X.ParseOptions Nothing Nothing)
 
 
-hold :: a -> (a -> Transition) -> (MM, Maybe ByteString)
-hold state next =
-    (MM (next state), Nothing)
-
-
 await :: Transition -> (MM, Maybe ByteString)
 await next =
     (MM next, Nothing)

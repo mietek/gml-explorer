@@ -69,7 +69,7 @@ networkMember :: Transition
 networkMember (EndElement "osgb:networkMember") =
     await root
 networkMember (StartElement "osgb:RoadLink" attrs) =
-    hold (newRL (getTOID attrs)) roadLink
+    await (roadLink (newRL (getTOID attrs)))
 networkMember _ =
     await networkMember
 
@@ -82,77 +82,77 @@ roadLink rl (EndElement "osgb:RoadLink")
         error ("roadLink: invalid osgb:RoadLink: " ++ show rl)
 roadLink rl (StartElement "osgb:descriptiveTerm" _)
   | rlTerm rl == Nothing =
-        hold rl (term none)
+        await (term none rl)
   | otherwise =
         error "roadLink: expected 1 osgb:descriptiveTerm"
 roadLink rl (StartElement "osgb:natureOfRoad" _)
   | rlNature rl == Nothing =
-        hold rl (nature none)
+        await (nature none rl)
   | otherwise =
         error "roadLink: expected 1 osgb:natureOfRoad"
 roadLink rl (StartElement "osgb:polyline" _)
   | rlPolyline rl == Nothing =
-        hold rl polyline
+        await (polyline rl)
   | otherwise =
         error "roadLink: expected 1 osgb:polyline"
 roadLink rl (StartElement "osgb:directedNode" attrs) =
     case (rlNegativeNode rl, rlPositiveNode rl, getDirectedNode attrs) of
       (Nothing, _, Left nn) ->
-        hold (rl {rlNegativeNode = Just nn}) roadLink
+        await (roadLink rl {rlNegativeNode = Just nn})
       (_, Nothing, Right pn) ->
-        hold (rl {rlPositiveNode = Just pn}) roadLink
+        await (roadLink rl {rlPositiveNode = Just pn})
       _ ->
         error "roadLink: expected 2 osgb:directedNode"
 roadLink rl _ =
-    hold rl roadLink
+    await (roadLink rl)
 
 
 term :: Builder -> RoadLink -> Transition
 term parts rl (EndElement "osgb:descriptiveTerm") =
-    hold (rl {rlTerm = Just (build parts)}) roadLink
+    await (roadLink rl {rlTerm = Just (build parts)})
 term parts rl (CharacterData part) =
-    hold rl (term (parts <> part))
+    await (term (parts <> part) rl)
 term parts rl _ =
-    hold rl (term parts)
+    await (term parts rl)
 
 
 nature :: Builder -> RoadLink -> Transition
 nature parts rl (EndElement "osgb:natureOfRoad") =
-    hold (rl {rlNature = Just (build parts)}) roadLink
+    await (roadLink rl {rlNature = Just (build parts)})
 nature parts rl (CharacterData part) =
-    hold rl (nature (parts <> part))
+    await (nature (parts <> part) rl)
 nature parts rl _ =
-    hold rl (nature parts)
+    await (nature parts rl)
 
 
 polyline :: RoadLink -> Transition
 polyline rl (EndElement "osgb:polyline") =
-    hold rl roadLink
+    await (roadLink rl)
 polyline rl (StartElement "gml:LineString" _)
   | rlPolyline rl == Nothing =
-        hold rl lineString
+        await (lineString rl)
   | otherwise =
         error "polyline: expected 1 gml:LineString"
 polyline rl _ =
-    hold rl polyline
+    await (polyline rl)
 
 
 lineString :: RoadLink -> Transition
 lineString rl (EndElement "gml:LineString") =
-    hold rl polyline
+    await (polyline rl)
 lineString rl (StartElement "gml:coordinates" _)
   | rlPolyline rl == Nothing =
-        hold rl (coordinates none)
+        await (coordinates none rl)
   | otherwise =
         error "lineString: expected 1 gml:coordinates"
 lineString rl _ =
-    hold rl lineString
+    await (lineString rl)
 
 
 coordinates :: Builder -> RoadLink -> Transition
 coordinates parts rl (EndElement "gml:coordinates") =
-    hold (rl {rlPolyline = Just (decodePolyline (build parts))}) lineString
+    await (lineString rl {rlPolyline = Just (decodePolyline (build parts))})
 coordinates parts rl (CharacterData part) =
-    hold rl (coordinates (parts <> part))
+    await (coordinates (parts <> part) rl)
 coordinates parts rl _ =
-    hold rl (coordinates parts)
+    await (coordinates parts rl)

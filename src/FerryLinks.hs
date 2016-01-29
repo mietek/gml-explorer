@@ -53,7 +53,7 @@ networkMember :: Transition
 networkMember (EndElement "osgb:networkMember") =
     await root
 networkMember (StartElement "osgb:FerryLink" attrs) =
-    hold (newFL (getTOID attrs)) ferryLink
+    await (ferryLink (newFL (getTOID attrs)))
 networkMember _ =
     await networkMember
 
@@ -67,10 +67,10 @@ ferryLink fl (EndElement "osgb:FerryLink")
 ferryLink fl (StartElement "osgb:directedNode" attrs) =
     case (flNegativeNode fl, flPositiveNode fl, getDirectedNode attrs) of
       (Nothing, _, Left nn) ->
-        hold (fl {flNegativeNode = Just nn}) ferryLink
+        await (ferryLink (fl {flNegativeNode = Just nn}))
       (_, Nothing, Right pn) ->
-        hold (fl {flPositiveNode = Just pn}) ferryLink
+        await (ferryLink (fl {flPositiveNode = Just pn}))
       _ ->
         error "ferryLink: expected 2 osgb:directedNode"
 ferryLink fl _ =
-    hold fl ferryLink
+    await (ferryLink fl)

@@ -64,7 +64,7 @@ roadMember :: Transition
 roadMember (EndElement "osgb:roadMember") =
     await root
 roadMember (StartElement "osgb:Road" attrs) =
-    hold (newR (getTOID attrs)) road
+    await (road (newR (getTOID attrs)))
 roadMember _ =
     await roadMember
 
@@ -77,47 +77,47 @@ road r (EndElement "osgb:Road")
         error ("road: invalid osgb:Road: " ++ show r)
 road r (StartElement "osgb:descriptiveGroup" _)
   | rGroup r == Nothing =
-        hold r (group none)
+        await (group none r)
   | otherwise =
         error "road: expected 1 osgb:descriptiveGroup"
 road r (StartElement "osgb:descriptiveTerm" _)
   | rTerm r == Nothing =
-        hold r (term none)
+        await (term none r)
   | otherwise =
         error "road: expected 1 osgb:descriptiveTerm"
 road r (StartElement "osgb:roadName" _)
   | rName r == Nothing =
-        hold r (name none)
+        await (name none r)
   | otherwise =
         error "road: expected 1 osgb:roadName"
 road r (StartElement "osgb:networkMember" attrs) =
-    hold (r {rMembers = getHRef attrs : rMembers r}) road
+    await (road r {rMembers = getHRef attrs : rMembers r})
 road r _ =
-    hold r road
+    await (road r)
 
 
 group :: Builder -> Road -> Transition
 group parts r (EndElement "osgb:descriptiveGroup") =
-    hold (r {rGroup = Just (build parts)}) road
+    await (road r {rGroup = Just (build parts)})
 group parts r (CharacterData part) =
-    hold r (group (parts <> part))
+    await (group (parts <> part) r)
 group parts r _ =
-    hold r (group parts)
+    await (group parts r)
 
 
 term :: Builder -> Road -> Transition
 term parts r (EndElement "osgb:descriptiveTerm") =
-    hold (r {rTerm = Just (build parts)}) road
+    await (road r {rTerm = Just (build parts)})
 term parts r (CharacterData part) =
-    hold r (term (parts <> part))
+    await (term (parts <> part) r)
 term parts r _ =
-    hold r (term parts)
+    await (term parts r)
 
 
 name :: Builder -> Road -> Transition
 name parts r (EndElement "osgb:roadName") =
-    hold (r {rName = Just (build parts)}) road
+    await (road r {rName = Just (build parts)})
 name parts r (CharacterData part) =
-    hold r (name (parts <> part))
+    await (name (parts <> part) r)
 name parts r _ =
-    hold r (name parts)
+    await (name parts r)
