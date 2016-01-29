@@ -30,15 +30,15 @@ main = do
 
 dispatch :: Command -> Transition
 dispatch Roads =
-    Roads.root
+    Roads.root 1
 dispatch RoadLinks =
-    RoadLinks.root
+    RoadLinks.root 1
 dispatch RoadNodes =
-    RoadNodes.root
+    RoadNodes.root 1
 dispatch FerryLinks =
-    FerryLinks.root
+    FerryLinks.root 1
 dispatch FerryNodes =
-    FerryNodes.root
+    FerryNodes.root 1
 
 
 writeFiles :: FilePath -> Command -> [ByteString] -> Int -> IO ()

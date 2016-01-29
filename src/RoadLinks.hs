@@ -14,7 +14,8 @@ import Toolkit
 
 
 data RoadLink = RL
-    { rlTOID         :: Text
+    { rlIndex        :: Int
+    , rlTOID         :: Text
     , rlTerm         :: Maybe Text
     , rlNature       :: Maybe Text
     , rlPolyline     :: Maybe [Double]
@@ -27,7 +28,8 @@ data RoadLink = RL
 instance ToJSON RoadLink where
   toJSON RL{..} =
       J.object
-        [ "toid"         .= rlTOID
+        [ "index"        .= rlIndex
+        , "toid"         .= rlTOID
         , "term"         .= rlTerm
         , "nature"       .= rlNature
         , "polyline"     .= rlPolyline
@@ -36,9 +38,10 @@ instance ToJSON RoadLink where
         ]
 
 
-newRL :: Text -> RoadLink
-newRL toid = RL
-    { rlTOID         = toid
+newRL :: Int -> Text -> RoadLink
+newRL index toid = RL
+    { rlIndex        = index
+    , rlTOID         = toid
     , rlTerm         = Nothing
     , rlNature       = Nothing
     , rlPolyline     = Nothing
@@ -58,26 +61,26 @@ validRL RL{..} =
     l = length (fromJust rlPolyline)
 
 
-root :: Transition
-root (StartElement "osgb:networkMember" _) =
-    await networkMember
-root _ =
-    await root
+root :: Int -> Transition
+root index (StartElement "osgb:networkMember" _) =
+    await (networkMember index)
+root index _ =
+    await (root index)
 
 
-networkMember :: Transition
-networkMember (EndElement "osgb:networkMember") =
-    await root
-networkMember (StartElement "osgb:RoadLink" attrs) =
-    await (roadLink (newRL (getTOID attrs)))
-networkMember _ =
-    await networkMember
+networkMember :: Int -> Transition
+networkMember index (EndElement "osgb:networkMember") =
+    await (root index)
+networkMember index (StartElement "osgb:RoadLink" attrs) =
+    await (roadLink (newRL index (getTOID attrs)))
+networkMember index _ =
+    await (networkMember index)
 
 
 roadLink :: RoadLink -> Transition
 roadLink rl (EndElement "osgb:RoadLink")
   | validRL rl =
-        yield rl networkMember
+        yield rl (networkMember (rlIndex rl + 1))
   | otherwise =
         error ("roadLink: invalid osgb:RoadLink: " ++ show rl)
 roadLink rl (StartElement "osgb:descriptiveTerm" _)

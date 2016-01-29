@@ -13,7 +13,8 @@ import Toolkit
 
 
 data Road = R
-    { rTOID    :: Text
+    { rIndex   :: Int
+    , rTOID    :: Text
     , rGroup   :: Maybe Text
     , rTerm    :: Maybe Text
     , rName    :: Maybe Text
@@ -25,7 +26,8 @@ data Road = R
 instance ToJSON Road where
   toJSON R{..} =
       J.object $ strip
-        [ "toid"    .= rTOID
+        [ "index"   .= rIndex
+        , "toid"    .= rTOID
         , "group"   .= rGroup
         , "term"    .= rTerm
         , "name"    .= rName
@@ -36,9 +38,10 @@ instance ToJSON Road where
           filter (\(_, v) -> v /= J.Null)
 
 
-newR :: Text -> Road
-newR toid = R
-    { rTOID    = toid
+newR :: Int -> Text -> Road
+newR index toid = R
+    { rIndex   = index
+    , rTOID    = toid
     , rGroup   = Nothing
     , rTerm    = Nothing
     , rName    = Nothing
@@ -53,26 +56,26 @@ validR R{..} =
     && rMembers /= []
 
 
-root :: Transition
-root (StartElement "osgb:roadMember" _) =
-    await roadMember
-root _ =
-    await root
+root :: Int -> Transition
+root index (StartElement "osgb:roadMember" _) =
+    await (roadMember index)
+root index _ =
+    await (root index)
 
 
-roadMember :: Transition
-roadMember (EndElement "osgb:roadMember") =
-    await root
-roadMember (StartElement "osgb:Road" attrs) =
-    await (road (newR (getTOID attrs)))
-roadMember _ =
-    await roadMember
+roadMember :: Int -> Transition
+roadMember index (EndElement "osgb:roadMember") =
+    await (root index)
+roadMember index (StartElement "osgb:Road" attrs) =
+    await (road (newR index (getTOID attrs)))
+roadMember index _ =
+    await (roadMember index)
 
 
 road :: Road -> Transition
 road r (EndElement "osgb:Road")
   | validR r =
-        yield r roadMember
+        yield r (roadMember (rIndex r + 1))
   | otherwise =
         error ("road: invalid osgb:Road: " ++ show r)
 road r (StartElement "osgb:descriptiveGroup" _)

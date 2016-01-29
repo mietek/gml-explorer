@@ -14,7 +14,8 @@ import Toolkit
 
 
 data RoadNode = RN
-    { rnTOID  :: Text
+    { rnIndex :: Int
+    , rnTOID  :: Text
     , rnPoint :: Maybe [Double]
     }
   deriving (Eq, Ord, Show)
@@ -23,14 +24,16 @@ data RoadNode = RN
 instance ToJSON RoadNode where
   toJSON RN{..} =
       J.object
-        [ "toid"  .= rnTOID
+        [ "index" .= rnIndex
+        , "toid"  .= rnTOID
         , "point" .= rnPoint
         ]
 
 
-newRN :: Text -> RoadNode
-newRN toid = RN
-    { rnTOID  = toid
+newRN :: Int -> Text -> RoadNode
+newRN index toid = RN
+    { rnIndex = index
+    , rnTOID  = toid
     , rnPoint = Nothing
     }
 
@@ -42,26 +45,26 @@ validRN RN{..} =
     l = length (fromJust rnPoint)
 
 
-root :: Transition
-root (StartElement "osgb:networkMember" _) =
-    await networkMember
-root _ =
-    await root
+root :: Int -> Transition
+root index (StartElement "osgb:networkMember" _) =
+    await (networkMember index)
+root index _ =
+    await (root index)
 
 
-networkMember :: Transition
-networkMember (EndElement "osgb:networkMember") =
-    await root
-networkMember (StartElement "osgb:RoadNode" attrs) =
-    await (roadNode (newRN (getTOID attrs)))
-networkMember _ =
-    await networkMember
+networkMember :: Int -> Transition
+networkMember index (EndElement "osgb:networkMember") =
+    await (root index)
+networkMember index (StartElement "osgb:RoadNode" attrs) =
+    await (roadNode (newRN index (getTOID attrs)))
+networkMember index _ =
+    await (networkMember index)
 
 
 roadNode :: RoadNode -> Transition
 roadNode rn (EndElement "osgb:RoadNode")
   | validRN rn =
-        yield rn networkMember
+        yield rn (networkMember (rnIndex rn + 1))
 roadNode rn (StartElement "osgb:point" _)
   | rnPoint rn == Nothing =
         await (osgbPoint rn)

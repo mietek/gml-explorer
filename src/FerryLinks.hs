@@ -12,7 +12,8 @@ import MealyMachine
 
 
 data FerryLink = FL
-    { flTOID         :: Text
+    { flIndex        :: Int
+    , flTOID         :: Text
     , flNegativeNode :: Maybe Text
     , flPositiveNode :: Maybe Text
     }
@@ -22,15 +23,17 @@ data FerryLink = FL
 instance ToJSON FerryLink where
   toJSON FL{..} =
       J.object
-        [ "toid"         .= flTOID
+        [ "index"        .= flIndex
+        , "toid"         .= flTOID
         , "negativeNode" .= flNegativeNode
         , "positiveNode" .= flPositiveNode
         ]
 
 
-newFL :: Text -> FerryLink
-newFL toid = FL
-    { flTOID         = toid
+newFL :: Int -> Text -> FerryLink
+newFL index toid = FL
+    { flIndex        = index
+    , flTOID         = toid
     , flNegativeNode = Nothing
     , flPositiveNode = Nothing
     }
@@ -42,26 +45,26 @@ validFL FL{..} =
     && flPositiveNode /= Nothing
 
 
-root :: Transition
-root (StartElement "osgb:networkMember" _) =
-    await networkMember
-root _ =
-    await root
+root :: Int -> Transition
+root index (StartElement "osgb:networkMember" _) =
+    await (networkMember index)
+root index _ =
+    await (root index)
 
 
-networkMember :: Transition
-networkMember (EndElement "osgb:networkMember") =
-    await root
-networkMember (StartElement "osgb:FerryLink" attrs) =
-    await (ferryLink (newFL (getTOID attrs)))
-networkMember _ =
-    await networkMember
+networkMember :: Int -> Transition
+networkMember index (EndElement "osgb:networkMember") =
+    await (root index)
+networkMember index (StartElement "osgb:FerryLink" attrs) =
+    await (ferryLink (newFL index (getTOID attrs)))
+networkMember index _ =
+    await (networkMember index)
 
 
 ferryLink :: FerryLink -> Transition
 ferryLink fl (EndElement "osgb:FerryLink")
   | validFL fl =
-        yield fl networkMember
+        yield fl (networkMember (flIndex fl + 1))
   | otherwise =
         error ("ferryLink: invalid osgb:FerryLink: " ++ show fl)
 ferryLink fl (StartElement "osgb:directedNode" attrs) =

@@ -14,7 +14,8 @@ import Toolkit
 
 
 data FerryNode = RN
-    { fnTOID  :: Text
+    { fnIndex :: Int
+    , fnTOID  :: Text
     , fnPoint :: Maybe [Double]
     }
   deriving (Eq, Ord, Show)
@@ -23,14 +24,16 @@ data FerryNode = RN
 instance ToJSON FerryNode where
   toJSON RN{..} =
       J.object
-        [ "toid"  .= fnTOID
+        [ "index" .= fnIndex
+        , "toid"  .= fnTOID
         , "point" .= fnPoint
         ]
 
 
-newRN :: Text -> FerryNode
-newRN toid = RN
-    { fnTOID  = toid
+newRN :: Int -> Text -> FerryNode
+newRN index toid = RN
+    { fnIndex = index
+    , fnTOID  = toid
     , fnPoint = Nothing
     }
 
@@ -42,26 +45,26 @@ validRN RN{..} =
     l = length (fromJust fnPoint)
 
 
-root :: Transition
-root (StartElement "osgb:networkMember" _) =
-    await networkMember
-root _ =
-    await root
+root :: Int -> Transition
+root index (StartElement "osgb:networkMember" _) =
+    await (networkMember index)
+root index _ =
+    await (root index)
 
 
-networkMember :: Transition
-networkMember (EndElement "osgb:networkMember") =
-    await root
-networkMember (StartElement "osgb:FerryNode" attrs) =
-    await (ferryNode (newRN (getTOID attrs)))
-networkMember _ =
-    await networkMember
+networkMember :: Int -> Transition
+networkMember index (EndElement "osgb:networkMember") =
+    await (root index)
+networkMember index (StartElement "osgb:FerryNode" attrs) =
+    await (ferryNode (newRN index (getTOID attrs)))
+networkMember index _ =
+    await (networkMember index)
 
 
 ferryNode :: FerryNode -> Transition
 ferryNode fn (EndElement "osgb:FerryNode")
   | validRN fn =
-        yield fn networkMember
+        yield fn (networkMember (fnIndex fn + 1))
 ferryNode fn (StartElement "osgb:point" _)
   | fnPoint fn == Nothing =
         await (osgbPoint fn)
