@@ -13,7 +13,7 @@ import MealyMachine
 import Toolkit
 
 
-data FerryNode = RN
+data FerryNode = FN
     { fnIndex :: Int
     , fnTOID  :: Text
     , fnPoint :: Maybe [Double]
@@ -22,7 +22,7 @@ data FerryNode = RN
 
 
 instance ToJSON FerryNode where
-  toJSON RN{..} =
+  toJSON FN{..} =
       J.object
         [ "index" .= fnIndex
         , "toid"  .= fnTOID
@@ -30,16 +30,16 @@ instance ToJSON FerryNode where
         ]
 
 
-newRN :: Int -> Text -> FerryNode
-newRN index toid = RN
+newFN :: Int -> Text -> FerryNode
+newFN index toid = FN
     { fnIndex = index
     , fnTOID  = toid
     , fnPoint = Nothing
     }
 
 
-validRN :: FerryNode -> Bool
-validRN RN{..} =
+validFN :: FerryNode -> Bool
+validFN FN{..} =
     fnPoint /= Nothing && l == 2
   where
     l = length (fromJust fnPoint)
@@ -56,14 +56,14 @@ networkMember :: Int -> Transition
 networkMember index (EndElement "osgb:networkMember") =
     await (root index)
 networkMember index (StartElement "osgb:FerryNode" attrs) =
-    await (ferryNode (newRN index (getTOID attrs)))
+    await (ferryNode (newFN index (getTOID attrs)))
 networkMember index _ =
     await (networkMember index)
 
 
 ferryNode :: FerryNode -> Transition
 ferryNode fn (EndElement "osgb:FerryNode")
-  | validRN fn =
+  | validFN fn =
         yield fn (networkMember (fnIndex fn + 1))
 ferryNode fn (StartElement "osgb:point" _)
   | fnPoint fn == Nothing =
